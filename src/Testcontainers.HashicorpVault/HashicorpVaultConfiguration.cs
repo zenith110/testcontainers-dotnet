@@ -8,10 +8,10 @@ public sealed class HashicorpVaultConfiguration : ContainerConfiguration
     /// Initializes a new instance of the <see cref="HashicorpVaultConfiguration" /> class.
     /// </summary>
     /// <param name="config">The HashicorpVault config.</param>
-    public HashicorpVaultConfiguration(string VAULT_DEV_ROOT_TOKEN_ID = null, string VAULT_DEV_LISTEN_ADDRESS = null)
+    public HashicorpVaultConfiguration(string VAULT_DEV_ROOT_TOKEN_ID = null, string VAULT_DEV_LISTEN_ADDRESS = "0.0.0.0:8200")
     {
-        // // Sets the custom builder methods property values.
-        // Config = config;
+        VAULT_DEV_ROOT_TOKEN_ID = VAULT_DEV_ROOT_TOKEN_ID;
+        VAULT_DEV_LISTEN_ADDRESS = VAULT_DEV_LISTEN_ADDRESS;
     }
 
     /// <summary>
@@ -61,7 +61,7 @@ public sealed class HashicorpVaultConfiguration : ContainerConfiguration
     // /// <summary>
     // /// Gets the HashicorpVault config.
     // /// </summary>
-    // public object Config { get; }
+    public object Config { get; }
     public string VAULT_DEV_LISTEN_ADDRESS { get; }
     public string VAULT_DEV_ROOT_TOKEN_ID { get; }
 

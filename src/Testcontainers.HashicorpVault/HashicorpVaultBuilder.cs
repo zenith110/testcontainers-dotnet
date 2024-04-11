@@ -4,6 +4,10 @@ namespace Testcontainers.HashicorpVault;
 [PublicAPI]
 public sealed class HashicorpVaultBuilder : ContainerBuilder<HashicorpVaultBuilder, HashicorpVaultContainer, HashicorpVaultConfiguration>
 {
+    public const string HashicorpVaultImage = "docker.io/hashicorp/vault:1.16";
+
+    public const ushort HashicorpVaultPort = 8200;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="HashicorpVaultBuilder" /> class.
     /// </summary>
@@ -29,7 +33,7 @@ public sealed class HashicorpVaultBuilder : ContainerBuilder<HashicorpVaultBuild
     private HashicorpVaultBuilder(HashicorpVaultConfiguration resourceConfiguration)
         : base(resourceConfiguration)
     {
-        // DockerResourceConfiguration = resourceConfiguration;
+        DockerResourceConfiguration = resourceConfiguration;
     }
 
     // /// <inheritdoc />
@@ -57,17 +61,25 @@ public sealed class HashicorpVaultBuilder : ContainerBuilder<HashicorpVaultBuild
     // /// <inheritdoc />
     protected override HashicorpVaultBuilder Init()
     {
-        var waitStrategy = Wait.ForUnixContainer().UntilCommandIsCompleted("pg_isready");
-        return base.Init().WithImage("hashicorp/vault:latest").WithPortBinding(8200, true).WithWaitStrategy(waitStrategy);
+        return base.Init()
+            .WithImage(HashicorpVaultImage)
+            .WithPortBinding(HashicorpVaultPort, true)
+            .WithWaitStrategy(Wait.ForUnixContainer().AddCustomWaitStrategy(new WaitUntil()));
     }
 
-    }
-
+    
     // /// <inheritdoc />
-    // protected override void Validate()
-    // {
-    //     base.Validate();
-    // }
+    protected override void Validate()
+    {
+        base.Validate();
+        _ = Guard.Argument(DockerResourceConfiguration.VAULT_DEV_ROOT_TOKEN_ID, nameof(HashicorpVaultConfiguration.VAULT_DEV_ROOT_TOKEN_ID))
+        .NotNull()
+        .NotEmpty();
+
+        _ = Guard.Argument(DockerResourceConfiguration.VAULT_DEV_LISTEN_ADDRESS, nameof(HashicorpVaultConfiguration.VAULT_DEV_LISTEN_ADDRESS))
+        .NotNull()
+        .NotEmpty();
+    }
 
     /// <inheritdoc />
     protected override HashicorpVaultBuilder Clone(IResourceConfiguration<CreateContainerParameters> resourceConfiguration)
@@ -86,4 +98,25 @@ public sealed class HashicorpVaultBuilder : ContainerBuilder<HashicorpVaultBuild
     {
         return new HashicorpVaultBuilder(new HashicorpVaultConfiguration(oldValue, newValue));
     }
+
+    /// <summary>
+    /// Sets the environment variable for the root token id to sign in
+    /// </summary>
+    /// <param name="vaultDevRootTokenID">The Hashicorp Vault root token id used to sign in.</param>
+    /// <returns>A configured instance of <see cref="HashicorpVaultBuilder" />.</returns>
+    public HashicorpVaultBuilder WithVaultDevRootTokenID(string vaultDevRootTokenID){
+        return Merge(DockerResourceConfiguration, new HashicorpVaultConfiguration(VAULT_DEV_ROOT_TOKEN_ID: vaultDevRootTokenID))
+            .WithEnvironment("VAULT_DEV_ROOT_TOKEN_ID", vaultDevRootTokenID);
+    }
+
+    /// <summary>
+    /// Sets the listening address for the dev vault instance
+    /// </summary>
+    /// <param name="vaultDevListenAddress">The listening address for the dev vault container</param>
+    /// <returns>A configured instance of <see cref="HashicorpVaultBuilder" />.</returns>
+    public HashicorpVaultBuilder WithVaultDevListenAddress(string vaultDevListenAddress){
+        return Merge(DockerResourceConfiguration, new HashicorpVaultConfiguration(VAULT_DEV_LISTEN_ADDRESS: vaultDevListenAddress))
+            .WithEnvironment("VAULT_DEV_LISTEN_ADDRESS", vaultDevListenAddress);
+    }
+
 }
